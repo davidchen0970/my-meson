@@ -23,6 +23,11 @@ jobs:
           sudo apt-get install -y meson ninja-build
         fi
 
+    - name: Wrap nlohmann
+      run: |
+        mkdir -p subprojects
+        meson wrap install nlohmann_json
+
     - name: Configure Build
       run: |
         if [ "${{ matrix.target }}" = "windows" ]; then
