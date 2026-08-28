@@ -1,36 +1,48 @@
-name: Build with Meson
+name: Build Linux and Windows
 
 on: [push, pull_request]
 
 jobs:
-  build:
-    # 選擇你要執行的作業系統環境 (windows-latest, ubuntu-latest, macos-latest)
-    runs-on: windows-latest
-
+  build-linux:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-
+    - uses: actions/checkout@v4
     - name: Install Meson and Ninja
+      run: sudo apt-get update && sudo apt-get install -y meson ninja-build
+    - name: Setup and Compile Linux
       run: |
-        pip install meson ninja
+        meson setup build_linux
+        meson compile -C build_linux
+    - name: Upload Linux Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-executable
+        path: build_linux/hello
 
-    - name: Setup MSVC Environment
-      uses: ilammy/msvc-dev-cmd@v1
-
-    - name: Setup Build Directory
-      run: meson setup build
-
-    - name: Compile Project
-      run: meson compile -C build
-
-    - name: Upload Artifact (.exe)
+  build-windows:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install MinGW and Meson
+      run: sudo apt-get update && sudo apt-get install -y meson ninja-build mingw-w64
+    - name: Create Cross-file
+      run: |
+        echo "[binaries]" > cross_windows.txt
+        echo "c = 'x86_64-w64-mingw32-gcc'" >> cross_windows.txt
+        echo "cpp = 'x86_64-w64-mingw32-g++'" >> cross_windows.txt
+        echo "ar = 'x86_64-w64-mingw32-ar'" >> cross_windows.txt
+        echo "strip = 'x86_64-w64-mingw32-strip'" >> cross_windows.txt
+        echo "[host_machine]" >> cross_windows.txt
+        echo "system = 'windows'" >> cross_windows.txt
+        echo "cpu_family = 'x86_64'" >> cross_windows.txt
+        echo "cpu = 'x86_64'" >> cross_windows.txt
+        echo "endian = 'little'" >> cross_windows.txt
+    - name: Setup and Compile Windows
+      run: |
+        meson setup build_win --cross-file cross_windows.txt
+        meson compile -C build_win
+    - name: Upload Windows Exe
       uses: actions/upload-artifact@v4
       with:
         name: windows-executable
-        path: build/hello.exe
+        path: build_win/hello.exe
