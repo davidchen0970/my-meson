@@ -11,7 +11,7 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y meson ninja-build
     - name: Setup and Compile Linux
       run: |
-        meson setup build_linux
+        meson setup build_linux -Denable_debug=true
         meson compile -C build_linux
     - name: Upload Linux Binary
       uses: actions/upload-artifact@v4
@@ -39,8 +39,8 @@ jobs:
         echo "endian = 'little'" >> cross_windows.txt
     - name: Setup and Compile Windows
       run: |
-        meson setup build_win --cross-file cross_windows.txt
-        meson compile -C build_win
+        meson setup build_win --cross-file cross_windows.txt -Denable_debug=true
+        meson compile -C build_win 
     - name: Upload Windows Exe
       uses: actions/upload-artifact@v4
       with:
